@@ -1,50 +1,62 @@
-; Z80 ASSEMBLY PROGRAM
-; Filename: myprogram.asm
-; Functionality: Copies a 10-byte block from SOURCE_ADDR to DEST_ADDR.
-;                Each byte is bitwise-inverted (NOT) during the copy.
+; =======================================================
+; Z80 Assembly Program: Sum of First N Integers
+; File: integer_sum.asm
+; Description: Calculates the sum of integers from 1 up to a hardcoded value N.
+; The result is stored as a 16-bit value in memory.
+; (Coded for a standard Z80 environment, e.g., CP/M or emulator starting at 0100h)
+; =======================================================
 
-ORG $8000         ; Program starts at memory address $8000
+ORG 0100h           ; Standard starting address
 
-; --- DATA DEFINITION ---
-SOURCE_ADDR EQU $9000 ; Start of the 10-byte source data block
-DEST_ADDR EQU $9100 ; Start of the destination memory area
-BLOCK_SIZE EQU $0A ; The size of the block to copy (10 bytes)
+; --- Program Data and Variables ---
+; We use memory addresses 8000h onwards for data storage
+N_VALUE:    DB 0Ch      ; INPUT: The number N (0Ch = 12 decimal)
+; (1 + 2 + ... + 12 = 78 decimal)
+RESULT:     DW 0000h    ; OUTPUT: 16-bit location to store the final sum (78 = 004Eh)
 
-; --- MAIN PROGRAM START ---
-MAIN:
-    ; 1. INITIALIZE POINTERS AND COUNTER
-    LD HL, SOURCE_ADDR  ; Load source address ($9000) into the HL pointer
-    LD DE, DEST_ADDR    ; Load destination address ($9100) into the DE pointer
-    LD BC, BLOCK_SIZE   ; Load the block size (10) into the BC counter
+; --- Main Program Execution ---
+START:
+; 1. Initialize 16-bit sum register (HL) to 0.
+LD HL, 0000h        ; HL = Sum = 0
 
-    ; 2. THE COPY/INVERT LOOP
-COPY_LOOP:
-    ; 2.1. READ BYTE
-    LD A, (HL)          ; Load the byte from memory pointed to by HL into the Accumulator (A)
+; 2. Load the input N from memory into register B (our 8-bit counter).
+LD A, (N_VALUE)
+LD B, A             ; B = N
 
-    ; 2.2. INVERT BITS
-    CPL                 ; Complement (invert) the bits in the Accumulator (A = NOT A)
+; 3. Loop setup: We will sum B, decrement B, and repeat until B is zero.
 
-    ; 2.3. WRITE BYTE
-    LD (DE), A          ; Store the inverted byte from A into the memory location pointed to by DE
 
-    ; 2.4. UPDATE POINTERS
-    INC HL              ; Increment the source pointer (HL = HL + 1)
-    INC DE              ; Increment the destination pointer (DE = DE + 1)
+LOOP_START:
+; Check if counter B is zero.
+LD A, B
+OR A                ; Sets the Z flag if A (and thus B) is 0
+JR Z, DONE          ; Jump if B = 0 (loop is finished)
 
-    ; 2.5. DECREMENT COUNTER AND CHECK
-    DEC BC              ; Decrement the byte counter (BC = BC - 1)
-    LD A, C             ; Load the low byte of the counter into A
-    OR B                ; OR A with the high byte of the counter (B). Checks if BC is zero.
-    JR NZ, COPY_LOOP    ; Jump back to COPY_LOOP if BC is NOT Zero
+; --- Summation Step (HL = HL + B) ---
+; The ADD HL, reg_pair instruction requires a 16-bit register pair (DE)
+; to hold the value being added. Since B is 8-bit, we treat it as 16-bit (00|B).
 
-    ; 3. HALT EXECUTION
-    HALT              ; Stop the CPU
+; a. Prepare DE register: D = 0, E = B
+LD D, 00h           ; D (High Byte) = 0
+LD E, B             ; E (Low Byte) = B (the current integer N)
 
-; --- SOURCE DATA BLOCK ---
-ORG $9000             ; Define data starting at $9000
-DATA_BLOCK:
-    DB $FF,$00,$11,$22,$33,$44,$55,$66,$77,$88 
-    ; 10 bytes of initial data
+; b. Perform 16-bit addition: HL = HL + DE
+ADD HL, DE          ; HL = HL + (00h | B)
 
-END ; End of source file
+; c. Decrement the counter and loop.
+DEC B               ; N = N - 1
+JR LOOP_START       ; Jump back to the start of the loop
+
+
+; --- Program Completion ---
+DONE:
+; 4. Store the final 16-bit result (HL) back into memory (RESULT).
+; Z80 is Little-Endian: L-byte is stored first, H-byte second.
+LD (RESULT), HL
+
+; Halt the CPU/Return to Monitor (depending on the environment)
+HALT
+
+
+; --- End of Code ---
+END START
