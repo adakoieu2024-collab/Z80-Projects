@@ -1,20 +1,20 @@
 ; Z80 ASSEMBLY PROGRAM
-; Filename: BLOCK_COPY_INVERT.ASM
+; Filename: myprogram.asm
 ; Functionality: Copies a 10-byte block from SOURCE_ADDR to DEST_ADDR.
 ;                Each byte is bitwise-inverted (NOT) during the copy.
 
-ORG 8000H         ; Program starts at memory address 8000h
+ORG $8000         ; Program starts at memory address $8000
 
 ; --- DATA DEFINITION ---
-SOURCE_ADDR EQU 9000H  ; Start of the 10-byte source data block
-DEST_ADDR   EQU 9100H  ; Start of the destination memory area
-BLOCK_SIZE  EQU 0AH    ; The size of the block to copy (10 bytes)
+SOURCE_ADDR EQU $9000 ; Start of the 10-byte source data block
+DEST_ADDR EQU $9100 ; Start of the destination memory area
+BLOCK_SIZE EQU $0A ; The size of the block to copy (10 bytes)
 
 ; --- MAIN PROGRAM START ---
 MAIN:
     ; 1. INITIALIZE POINTERS AND COUNTER
-    LD HL, SOURCE_ADDR  ; Load source address (9000h) into the HL pointer
-    LD DE, DEST_ADDR    ; Load destination address (9100h) into the DE pointer
+    LD HL, SOURCE_ADDR  ; Load source address ($9000) into the HL pointer
+    LD DE, DEST_ADDR    ; Load destination address ($9100) into the DE pointer
     LD BC, BLOCK_SIZE   ; Load the block size (10) into the BC counter
 
     ; 2. THE COPY/INVERT LOOP
@@ -35,16 +35,16 @@ COPY_LOOP:
     ; 2.5. DECREMENT COUNTER AND CHECK
     DEC BC              ; Decrement the byte counter (BC = BC - 1)
     LD A, C             ; Load the low byte of the counter into A
-    OR B                ; OR A with the high byte of the counter (B).
+    OR B                ; OR A with the high byte of the counter (B). Checks if BC is zero.
     JR NZ, COPY_LOOP    ; Jump back to COPY_LOOP if BC is NOT Zero
 
     ; 3. HALT EXECUTION
     HALT              ; Stop the CPU
 
 ; --- SOURCE DATA BLOCK ---
-ORG SOURCE_ADDR       ; Define data starting at 9000h
+ORG $9000             ; Define data starting at $9000
 DATA_BLOCK:
-    DB 0FFH, 00H, 11H, 22H, 33H, 44H, 55H, 66H, 77H, 88H 
+    DB $FF,$00,$11,$22,$33,$44,$55,$66,$77,$88 
     ; 10 bytes of initial data
 
 END ; End of source file
